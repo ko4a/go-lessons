@@ -9,16 +9,21 @@ import (
 	"io"
 )
 
-func parseString2(text string)(result []int)  {
+func nativeParseString(text string)(result []int, err error)  {
 	var buf[]int
 	for _,number := range strings.Split(text, " "){
-		value,_ := strconv.Atoi(number)
+		value, err := strconv.Atoi(number)
+
+		if err != nil {
+			return nil, err
+		}
+
 		buf = append(buf, value)
 	}
-	return buf
+	return buf, nil
 }
 
-func parseString(text string) (result []int) {
+func customParseString(text string) (result []int, err error) {
 	var buf []int
 	var number string
 
@@ -28,13 +33,18 @@ func parseString(text string) (result []int) {
 		}
 
 		if char == ' ' || pos +1 == len(text) {
-			i, _ := strconv.Atoi(number)
+			i, err := strconv.Atoi(number)
+
+			if err != nil {
+				return nil, err
+			}
+
 			buf = append(buf, i)
 			number = ""
 		}
 	}
 
-	return buf
+	return buf, nil
 }
 
 func removeDuplicates(values []int) (result []int) {
@@ -55,17 +65,54 @@ func removeDuplicates(values []int) (result []int) {
 	return result
 }
 
-
-
-func main() {
-	in := bufio.NewScanner(os.Stdin)
+func customParseAndRemoveDuplicates(input io.Reader) (result []int , err error)  {
+	in := bufio.NewScanner(input)
 	var buf []int
 
 	for in.Scan() {
-		buf = parseString(in.Text())
-		buf = parseString2(in.Text())
+		buf, err = customParseString(in.Text())
+
+		if err !=nil {
+			return nil, err
+		}
+
 		buf= removeDuplicates(buf)
 	}
+	return buf,nil
+}
 
-	fmt.Println(buf)
+func nativeParseAndRemoveDuplicates(input io.Reader)(result []int, err error)  {
+	in := bufio.NewScanner(input)
+	var buf []int
+
+	for in.Scan() {
+		buf, err = nativeParseString(in.Text())
+
+		if err !=nil {
+			return nil, err
+		}
+
+		buf= removeDuplicates(buf)
+	}
+	return buf,nil
+}
+
+func main() {
+	res,err := customParseAndRemoveDuplicates(os.Stdin)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println(res)
+
+	res,err = nativeParseAndRemoveDuplicates(os.Stdin)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println(res)
+
+
 }
