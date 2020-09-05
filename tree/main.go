@@ -7,8 +7,69 @@ import (
 	"sort"
 )
 
-func printTree(output *io.Writer, path *string, includeFiles *bool) error {
-	file, err := os.Open(*path)
+const START_LEVEL = 0
+
+type treePrintDTO struct {
+	output       *io.Writer
+	path         string
+	includeFiles bool
+}
+
+type filePrintDTO struct {
+	output *io.Writer
+	file   *os.FileInfo
+	isLast bool
+	level  int
+	isLastDir bool
+}
+
+func checkIsPosLast(files []os.FileInfo, pos int) bool  {
+	for i:=pos+1; i < len(files) ; i++ {
+		if files[i].IsDir() {
+			return false
+		}
+	}
+	return true
+}
+
+func printFile(dto *filePrintDTO) {
+	file := *dto.file
+	var prefix string
+
+	if dto.isLast {
+		prefix = "└───"
+	} else {
+		prefix = "├───"
+	}
+
+	if dto.level == START_LEVEL {
+		fmt.Fprintf(*dto.output, prefix + file.Name() + "\n")
+		return
+	}
+
+	indent := "|\t"
+	lastDirFlag := dto.isLastDir
+	for i:=0; i < dto.level; i++ {
+		if lastDirFlag {
+			fmt.Fprintf(*dto.output, indent)
+			indent = "\t"
+			lastDirFlag = false
+			continue
+		}
+		fmt.Fprintf(*dto.output, indent)
+	}
+
+	fmt.Fprintf(*dto.output, prefix + file.Name() + "\n")
+
+}
+
+func newTreePrintDTO(output *io.Writer, path string, includeFiles bool) *treePrintDTO {
+	return &treePrintDTO{output, path, includeFiles}
+}
+
+func printTree(dto *treePrintDTO, level int) error {
+	file, err := os.Open(dto.path)
+
 	if err != nil {
 		return err
 	}
@@ -19,38 +80,41 @@ func printTree(output *io.Writer, path *string, includeFiles *bool) error {
 		return files[i].Name() < files[j].Name()
 	})
 
-	if len(files) == 1 {
-		fmt.Fprintf(*output,"|\t")
-	}
+	tmpPath := dto.path
 
-	for pos,file := range files {
+	isLastDir := false
+	for pos, file := range files {
 		if file.IsDir() {
-			fmt.Fprintf(*output, "├───"+file.Name()+"\n")
-			tmpPath := *path + "/"+file.Name()
-			if err := printTree(output, &tmpPath, includeFiles); err != nil {
+			isLast := checkIsPosLast(files, pos) && !dto.includeFiles
+			isLastDir = isLast
+			dto.path += "/" + file.Name()
+			printDto := &filePrintDTO{dto.output, &file, isLast, level,isLastDir}
+			printFile(printDto)
+			level++
+			if err := printTree(dto, level); err != nil {
 				return err
 			}
+			isLastDir = false
+			level--
+			dto.path = tmpPath
 
 		} else {
-			if *includeFiles {
-				if pos == len(files)-1{
-					fmt.Fprintf(*output,"|\t")
-					fmt.Fprintf(*output,"└───")
-				} else {
-					fmt.Fprintf(*output,"├───")
-				}
-				fmt.Fprintf(*output,file.Name() +"\n")
+			if dto.includeFiles {
+				isLast := pos == len(files) - 1
+				printDto := &filePrintDTO{dto.output, &file, isLast, level,isLastDir}
+				printFile(printDto)
 			}
 		}
 
 	}
+
 	return nil
 }
 
-func dirTree(output io.Writer, path string, includeFiles bool ) error {
-	printTree(&output, &path, &includeFiles)
+func dirTree(output io.Writer, path string, includeFiles bool) error {
+	dto := newTreePrintDTO(&output, path, includeFiles)
 
-   	return nil
+	return printTree(dto,START_LEVEL)
 }
 
 func main() {
