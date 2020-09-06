@@ -3,18 +3,8 @@ version: '3'
 services:
   go:
     container_name: golang
-    image: golang:1.15-alpine
-    restart: always
+    image: golang:1.15.1-buster
+    command: tail -f /dev/null
+    working_dir: /go/src/bot
     volumes:
-    - .:/app
-    working_dir: /app
-    networks:
-      - app
-
-networks:
-  app:
-    driver: bridge
-
-volumes:
-  data:
-    driver: local
+    - .:/go/src/bot
