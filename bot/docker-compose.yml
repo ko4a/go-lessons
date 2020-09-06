@@ -8,3 +8,21 @@ services:
     working_dir: /go/src/bot
     volumes:
     - .:/go/src/bot
+    networks:
+      - app
+
+  db:
+    image: postgres
+    container_name: db
+    restart: always
+    volumes:
+    - ./docker/data/postgres:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - app
+
+networks:
+  app:

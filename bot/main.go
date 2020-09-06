@@ -11,6 +11,7 @@ import (
 var (
 	config  *Config
 	baseUrl string
+	db *Store
 )
 
 func init() {
@@ -22,6 +23,13 @@ func init() {
 
 	config = &Config{
 		ApiKey: os.Getenv("BOT_API_KEY"),
+		dbConfig: NewDbConfig(os.Getenv("DB_URL")),
+	}
+
+	db := NewStore(config.dbConfig)
+
+	if err = db.Open(); err != nil{
+		panic(err.Error())
 	}
 
 	baseUrl = "https://api.telegram.org/bot" + config.ApiKey

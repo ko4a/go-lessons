@@ -2,6 +2,7 @@ package main
 
 type Config struct {
 	ApiKey string
+	dbConfig *DbConfig
 }
 
 type Update struct {
