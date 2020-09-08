@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -11,7 +10,7 @@ import (
 var (
 	config  *Config
 	baseUrl string
-	db *Store
+	db      *Store
 )
 
 func init() {
@@ -22,17 +21,22 @@ func init() {
 	}
 
 	config = &Config{
-		ApiKey: os.Getenv("BOT_API_KEY"),
+		ApiKey:   os.Getenv("BOT_API_KEY"),
 		dbConfig: NewDbConfig(os.Getenv("DB_URL")),
+		LogUrl:   os.Getenv("LOG_URL"),
 	}
 
 	db := NewStore(config.dbConfig)
 
-	if err = db.Open(); err != nil{
+	if err = db.Open(); err != nil {
 		panic(err.Error())
 	}
 
 	baseUrl = "https://api.telegram.org/bot" + config.ApiKey
+
+	outFile, _ = os.OpenFile(config.LogUrl, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
+	LogFile = log.New(outFile, "", 0)
+	LogFile.SetPrefix(time.Now().String())
 
 }
 
@@ -41,16 +45,15 @@ func main() {
 	offset := 0
 
 	for {
-		time.Sleep(time.Duration(1) * time.Second)
+		time.Sleep(time.Duration(500) * time.Microsecond)
+
 		updates, err := getUpdates(offset)
-		if err != nil {
-			log.Println(err.Error())
-		}
+		WriteErrorLog(err)
 
 		for _, update := range updates {
-			offset = update.UpdateId
-			fmt.Println(update.Message)
+			WriteUpdateLog(update)
+			go update.process()
+			offset = update.UpdateId + 1
 		}
-
 	}
 }

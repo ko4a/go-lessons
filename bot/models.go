@@ -1,8 +1,9 @@
 package main
 
 type Config struct {
-	ApiKey string
+	ApiKey   string
 	dbConfig *DbConfig
+	LogUrl   string
 }
 
 type Update struct {

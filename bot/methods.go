@@ -2,13 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 func getUpdates(offset int) ([]Update, error) {
 
-	resp, err := http.Get(baseUrl + "/getUpdates")
+	resp, err := http.Get(baseUrl + "/getUpdates?offset=" + strconv.Itoa(offset))
 
 	if err != nil {
 		return nil, err
@@ -17,7 +19,7 @@ func getUpdates(offset int) ([]Update, error) {
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-
+	fmt.Println(string(body))
 	if err != nil {
 		return nil, err
 	}

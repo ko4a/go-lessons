@@ -18,3 +18,6 @@ deps:
 
 start:
 	${DCEXEC_GO} go run *.go
+
+csfix:
+	${DCEXEC_GO} gofmt -w .
